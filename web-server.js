@@ -7,10 +7,11 @@ var http = require('http'),
 	url = require('url'),
 	querystring = require('querystring');
 
+
 // DB init
 var accessesSchema, Accesses;
 var mongoose = require('mongoose');
-//var db = mongoose.createConnection('mongodb://localhost/test');
+//var db = mongoose.createConnection('mongodb://localhost/pvmservice');
 var uuid = require('node-uuid');
 var swig = require('swig');
 var fs = require('fs');
@@ -26,11 +27,17 @@ function inspectFile(fileName, contents, searchString) {
 	return "";
 }
 
+function logSearch(res, searchString) {
+	console.log("SEARCHING: " + searchString);
+	// #TODO: add to database
+}
+
 function searchOnLogs(res, searchString) {
 	res.setHeader("Access-Control-Allow-Origin", "*");
 	
 	fs.readdir('app/logspvm', function(err, files) {
 		var result = "";
+		logSearch(res, searchString);
 		
 		if (!err) {			
 			files
@@ -60,40 +67,19 @@ function searchOnLogs(res, searchString) {
 	});
 }
 
-function renderContentsFromFile(filePath, res, page404, returnCallback){
-    fs.exists(filePath,function(exists) {
-		if (exists){
-            fs.readFile(filePath,function(err,contents){
-				if(!err){
-					returnCallback(contents);
-                } else {
-                    console.dir(err);
-                };
-            });
-        } 
-		else {
-            fs.readFile(page404, function(err,contents){
-                if (!err) {
-                    res.writeHead(404, {'Content-Type': 'text/html'});
-                    res.end(contents);
-                } else {
-                    console.dir(err);
-                };
-            });
-        };
-    });
-}
-
 function getFile(filePath, res, page404, useViewsEngine){
+	var filePathUnescaped = querystring.unescape(filePath);
+	
 	res.setHeader("Access-Control-Allow-Origin", "*");
-	fs.exists(filePath,function(exists) {
+	
+	fs.exists(filePathUnescaped, function(exists) {
 		if (exists){			
 			if (useViewsEngine) {
-				var result = swig.renderFile(filePath);
+				var result = swig.renderFile(filePathUnescaped);
 				res.end(result);
 			}
 			else
-				fs.readFile(filePath,function(err,contents){
+				fs.readFile(filePathUnescaped, function(err,contents){
 					if(!err){
 						res.end(contents);
 					} else {
@@ -102,12 +88,13 @@ function getFile(filePath, res, page404, useViewsEngine){
 				});
         } 
 		else {
-            fs.readFile(page404, function(err,contents){
+            fs.readFile(page404, function(err, contents){
                 if (!err) {
                     res.writeHead(404, {'Content-Type': 'text/html'});
                     res.end(contents);
                 } else {
                     console.dir(err);
+					res.end();
                 };
             });
         };
@@ -157,6 +144,7 @@ function requestHandler(req, res) {
 	
 	// #TEMP: incoming inspector
 	console.log(datePrint() + " : " + req.connection.remoteAddress + ": " + pathname + "{" + arguments.toString() + "}");
+	
 	// #TEMP: incoming logger
 	//registerAccess(req.connection.remoteAddress, datePrint(), req.headers['user-agent'], pathname, arguments.toString());
 	
