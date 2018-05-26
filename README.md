@@ -1,3 +1,3 @@
-# PVM redirect site for searching entries for PVM website
+# PVM site for searching entries
 
-Site for words searching (simple word search until now by the way) for PVM website.
+Site for words searching on logs, texts, simple word search until.
